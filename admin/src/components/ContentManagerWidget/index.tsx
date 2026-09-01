@@ -40,12 +40,10 @@ export const ContentManagerWidget = () => {
     setLoading(true);
     try {
       await post('/publishing-workflow/transition', {
-        body: {
-          contentType: slug,
-          documentId: id,
-          targetStageId: selectedStage,
-          comment,
-        },
+        contentType: slug,
+        documentId: id,
+        targetStageId: selectedStage,
+        comment,
       });
       setComment('');
       setSelectedStage('');

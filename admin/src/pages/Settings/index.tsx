@@ -213,7 +213,7 @@ function WorkflowCard({ workflow, onDeleteWorkflow, fetchClient, roles }: any) {
     if (stageData.id) {
       await fetchClient.put(`/publishing-workflow/stages/${stageData.id}`, stageData);
     } else {
-      await fetchClient.post('/publishing-workflow/stages', { body: stageData });
+      await fetchClient.post('/publishing-workflow/stages', stageData);
     }
     setStageModalOpen(false);
     setEditingStage(null);
@@ -302,13 +302,8 @@ function WorkflowCard({ workflow, onDeleteWorkflow, fetchClient, roles }: any) {
 }
 
 export default function Settings() {
-  const { get, post, del } = useFetchClient();
-  const fetchClient = {
-    get,
-    post,
-    put: async (url: string, data: any) => post(url, { body: data }),
-    del,
-  };
+  const { get, post, put, del } = useFetchClient();
+  const fetchClient = { get, post, put, del };
 
   const [workflows, setWorkflows] = useState<any[]>([]);
   const [roles, setRoles] = useState<any[]>([]);
@@ -343,7 +338,8 @@ export default function Settings() {
     try {
       const types = newWorkflowTypes.split(',').map((s) => s.trim()).filter(Boolean);
       await post('/publishing-workflow/workflows', {
-        body: { name: newWorkflowName, targetContentTypes: types }
+        name: newWorkflowName,
+        targetContentTypes: types,
       });
       setNewWorkflowName('');
       setNewWorkflowTypes('');

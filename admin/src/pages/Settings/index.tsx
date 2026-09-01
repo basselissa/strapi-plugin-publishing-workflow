@@ -17,13 +17,19 @@ import {
   Td,
   Badge,
   Divider,
+  MultiSelect,
+  MultiSelectOption,
 } from '@strapi/design-system';
 import { Pencil, Trash, Plus, ChevronDown, ChevronUp } from '@strapi/icons';
 import { useFetchClient } from '@strapi/strapi/admin';
 
 const DEFAULT_COLORS = ['#cbd5e1', '#fde047', '#86efac', '#93c5fd', '#f9a8d4', '#a5b4fc', '#fdba74'];
 
-function StageRow({ stage, onEdit, onDelete }: any) {
+function StageRow({ stage, roles, onEdit, onDelete }: any) {
+  const allowedRoleNames = (stage.allowedRoles || [])
+    .map((roleId: number) => roles.find((r: any) => r.id === roleId)?.name)
+    .filter(Boolean);
+
   return (
     <Tr>
       <Td><Typography variant="omega">{stage.name}</Typography></Td>
@@ -44,6 +50,17 @@ function StageRow({ stage, onEdit, onDelete }: any) {
         <Badge active={stage.canPublish}>{stage.canPublish ? 'Yes' : 'No'}</Badge>
       </Td>
       <Td>
+        {allowedRoleNames.length > 0 ? (
+          <Flex gap={1} wrap="wrap">
+            {allowedRoleNames.map((name: string) => (
+              <Badge key={name}>{name}</Badge>
+            ))}
+          </Flex>
+        ) : (
+          <Typography variant="pi" textColor="neutral500">Any role</Typography>
+        )}
+      </Td>
+      <Td>
         <Flex gap={2}>
           <IconButton onClick={() => onEdit(stage)} label="Edit"><Pencil /></IconButton>
           <IconButton onClick={() => onDelete(stage)} label="Delete"><Trash /></IconButton>
@@ -53,21 +70,33 @@ function StageRow({ stage, onEdit, onDelete }: any) {
   );
 }
 
-function StageModal({ isOpen, onClose, onSave, stage, workflowId }: any) {
+function StageModal({ isOpen, onClose, onSave, stage, workflowId, roles }: any) {
   const [name, setName] = useState(stage?.name || '');
   const [color, setColor] = useState(stage?.color || '#cbd5e1');
   const [order, setOrder] = useState(stage?.order ?? 0);
   const [canPublish, setCanPublish] = useState(stage?.canPublish ?? false);
+  const [allowedRoles, setAllowedRoles] = useState<string[]>(
+    (stage?.allowedRoles || []).map((id: number) => String(id))
+  );
 
   useEffect(() => {
     setName(stage?.name || '');
     setColor(stage?.color || '#cbd5e1');
     setOrder(stage?.order ?? 0);
     setCanPublish(stage?.canPublish ?? false);
+    setAllowedRoles((stage?.allowedRoles || []).map((id: number) => String(id)));
   }, [stage]);
 
   const handleSave = () => {
-    onSave({ name, color, order: Number(order), canPublish, workflowId, id: stage?.documentId });
+    onSave({
+      name,
+      color,
+      order: Number(order),
+      canPublish,
+      allowedRoles: allowedRoles.length > 0 ? allowedRoles.map(Number) : null,
+      workflowId,
+      id: stage?.documentId,
+    });
   };
 
   if (!isOpen) return null;
@@ -129,6 +158,30 @@ function StageModal({ isOpen, onClose, onSave, stage, workflowId }: any) {
                 {canPublish ? 'Documents in this stage can be published' : 'Documents in this stage cannot be published'}
               </Typography>
             </Flex>
+
+            <Field.Root
+              hint={
+                roles.length > 0
+                  ? 'Only the selected roles will be able to move a document into this stage. Leave empty to allow anyone with transition permission.'
+                  : 'No admin roles available to pick from — this requires the core "Roles: Read" permission (Settings → Roles). Leave empty to allow any role with transition permission.'
+              }
+            >
+              <Field.Label>Allowed Roles</Field.Label>
+              {roles.length > 0 && (
+                <MultiSelect
+                  placeholder="Any role can transition into this stage"
+                  value={allowedRoles}
+                  onChange={setAllowedRoles}
+                >
+                  {roles.map((role: any) => (
+                    <MultiSelectOption key={role.id} value={String(role.id)}>
+                      {role.name}
+                    </MultiSelectOption>
+                  ))}
+                </MultiSelect>
+              )}
+              <Field.Hint />
+            </Field.Root>
           </Flex>
         </Modal.Body>
         <Modal.Footer>
@@ -140,7 +193,7 @@ function StageModal({ isOpen, onClose, onSave, stage, workflowId }: any) {
   );
 }
 
-function WorkflowCard({ workflow, onDeleteWorkflow, fetchClient }: any) {
+function WorkflowCard({ workflow, onDeleteWorkflow, fetchClient, roles }: any) {
   const [stages, setStages] = useState<any[]>([]);
   const [expanded, setExpanded] = useState(true);
   const [stageModalOpen, setStageModalOpen] = useState(false);
@@ -207,13 +260,14 @@ function WorkflowCard({ workflow, onDeleteWorkflow, fetchClient }: any) {
           {stages.length === 0 ? (
             <Typography variant="pi" textColor="neutral500">No stages yet. Click "Add Stage" to create your first!</Typography>
           ) : (
-            <Table colCount={5} rowCount={stages.length}>
+            <Table colCount={6} rowCount={stages.length}>
               <Thead>
                 <Tr>
                   <Th><Typography variant="sigma">Name</Typography></Th>
                   <Th><Typography variant="sigma">Color</Typography></Th>
                   <Th><Typography variant="sigma">Order</Typography></Th>
                   <Th><Typography variant="sigma">Can Publish</Typography></Th>
+                  <Th><Typography variant="sigma">Allowed Roles</Typography></Th>
                   <Th><Typography variant="sigma">Actions</Typography></Th>
                 </Tr>
               </Thead>
@@ -224,6 +278,7 @@ function WorkflowCard({ workflow, onDeleteWorkflow, fetchClient }: any) {
                     <StageRow
                       key={stage.documentId}
                       stage={stage}
+                      roles={roles}
                       onEdit={(s: any) => { setEditingStage(s); setStageModalOpen(true); }}
                       onDelete={handleDeleteStage}
                     />
@@ -240,6 +295,7 @@ function WorkflowCard({ workflow, onDeleteWorkflow, fetchClient }: any) {
         onSave={handleSaveStage}
         stage={editingStage}
         workflowId={workflow.documentId}
+        roles={roles}
       />
     </Box>
   );
@@ -255,6 +311,7 @@ export default function Settings() {
   };
 
   const [workflows, setWorkflows] = useState<any[]>([]);
+  const [roles, setRoles] = useState<any[]>([]);
   const [newWorkflowName, setNewWorkflowName] = useState('');
   const [newWorkflowTypes, setNewWorkflowTypes] = useState('');
   const [creating, setCreating] = useState(false);
@@ -264,7 +321,21 @@ export default function Settings() {
     setWorkflows((res.data as any)?.data || []);
   };
 
-  useEffect(() => { loadWorkflows(); }, []);
+  const loadRoles = async () => {
+    try {
+      const res = await get('/admin/roles');
+      setRoles((res.data as any)?.data || []);
+    } catch {
+      // User likely lacks the core "Roles: Read" permission — the Allowed
+      // Roles picker will fall back to a disabled state with an explanation.
+      setRoles([]);
+    }
+  };
+
+  useEffect(() => {
+    loadWorkflows();
+    loadRoles();
+  }, []);
 
   const handleCreateWorkflow = async () => {
     if (!newWorkflowName) return;
@@ -338,6 +409,7 @@ export default function Settings() {
             workflow={wf}
             onDeleteWorkflow={handleDeleteWorkflow}
             fetchClient={fetchClient}
+            roles={roles}
           />
         ))
       )}

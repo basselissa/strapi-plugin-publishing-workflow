@@ -1,0 +1,49 @@
+{
+  "kind": "collectionType",
+  "collectionName": "pw_workflow_stages",
+  "info": {
+    "singularName": "workflow-stage",
+    "pluralName": "workflow-stages",
+    "displayName": "Workflow Stage",
+    "description": "Stages for publishing workflows"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {
+    "content-manager": {
+      "visible": true
+    },
+    "content-type-builder": {
+      "visible": false
+    }
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "color": {
+      "type": "string",
+      "default": "#e2e8f0"
+    },
+    "order": {
+      "type": "integer",
+      "default": 0
+    },
+    "canPublish": {
+      "type": "boolean",
+      "default": false
+    },
+    "workflow": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::publishing-workflow.workflow",
+      "inversedBy": "stages"
+    },
+    "allowedRoles": {
+      "type": "json",
+      "description": "Array of admin role IDs allowed to transition to this stage"
+    }
+  }
+}

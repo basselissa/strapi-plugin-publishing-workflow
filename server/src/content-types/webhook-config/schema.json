@@ -1,0 +1,42 @@
+{
+  "kind": "collectionType",
+  "collectionName": "pw_webhook_configs",
+  "info": {
+    "singularName": "webhook-config",
+    "pluralName": "webhook-configs",
+    "displayName": "Webhook Config",
+    "description": "External webhook configurations for workflow events"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {
+    "content-manager": {
+      "visible": true
+    },
+    "content-type-builder": {
+      "visible": false
+    }
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "url": {
+      "type": "string",
+      "required": true
+    },
+    "secretHeader": {
+      "type": "string"
+    },
+    "events": {
+      "type": "json",
+      "description": "List of events to listen to, e.g. ['on_stage_change']"
+    },
+    "enabled": {
+      "type": "boolean",
+      "default": true
+    }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "kind": "collectionType",
+  "collectionName": "pw_workflow_states",
+  "info": {
+    "singularName": "workflow-state",
+    "pluralName": "workflow-states",
+    "displayName": "Workflow State",
+    "description": "Current state of documents in workflow"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {
+    "content-manager": {
+      "visible": false
+    },
+    "content-type-builder": {
+      "visible": false
+    }
+  },
+  "attributes": {
+    "entryDocumentId": {
+      "type": "string",
+      "required": true
+    },
+    "contentType": {
+      "type": "string",
+      "required": true
+    },
+    "stage": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "plugin::publishing-workflow.workflow-stage"
+    },
+    "assigneeId": {
+      "type": "integer"
+    },
+    "notes": {
+      "type": "text"
+    }
+  }
+}

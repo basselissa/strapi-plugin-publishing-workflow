@@ -1,0 +1,47 @@
+{
+  "kind": "collectionType",
+  "collectionName": "pw_workflow_history",
+  "info": {
+    "singularName": "workflow-history",
+    "pluralName": "workflow-histories",
+    "displayName": "Workflow History",
+    "description": "Audit log of stage transitions"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {
+    "content-manager": {
+      "visible": false
+    },
+    "content-type-builder": {
+      "visible": false
+    }
+  },
+  "attributes": {
+    "entryDocumentId": {
+      "type": "string",
+      "required": true
+    },
+    "contentType": {
+      "type": "string",
+      "required": true
+    },
+    "fromStage": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "plugin::publishing-workflow.workflow-stage"
+    },
+    "toStage": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "plugin::publishing-workflow.workflow-stage"
+    },
+    "performedBy": {
+      "type": "integer"
+    },
+    "comment": {
+      "type": "text"
+    }
+  }
+}
